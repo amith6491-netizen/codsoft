@@ -1,0 +1,40 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+// GET /api/applications
+//  - candidate: their own applications
+//  - recruiter: applications to a specific job they posted (?jobId=)
+export async function GET(req: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const jobId = searchParams.get("jobId");
+
+  if (session.user.role === "CANDIDATE") {
+    const applications = await prisma.application.findMany({
+      where: { candidateId: session.user.id },
+      include: { job: true },
+      orderBy: { appliedAt: "desc" }
+    });
+    return NextResponse.json(applications);
+  }
+
+  // RECRUITER
+  if (!jobId) {
+    return NextResponse.json({ error: "jobId is required for recruiters" }, { status: 400 });
+  }
+  const job = await prisma.job.findUnique({ where: { id: jobId } });
+  if (!job || job.recruiterId !== session.user.id) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+  }
+
+  const applications = await prisma.application.findMany({
+    where: { jobId },
+    include: { candidate: { include: { candidateProfile: true } } },
+    orderBy: { appliedAt: "desc" }
+  });
+  return NextResponse.json(applications);
+}

@@ -1,0 +1,174 @@
+:root {
+  --ink: #1c2333;
+  --paper: #f7f5f0;
+  --panel: #ffffff;
+  --rule: #dcd8cd;
+  --indigo: #2b3a67;
+  --indigo-deep: #1a2547;
+  --amber: #c17f2e;
+  --green: #3f6b4a;
+  --red: #9c3b3b;
+  --muted: #6b7280;
+  --radius: 3px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Source Sans Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, .brand {
+  font-family: "Source Serif Pro", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a { color: var(--indigo); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button, .btn {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--indigo);
+  background: var(--indigo);
+  color: #fff;
+  cursor: pointer;
+}
+button:hover, .btn:hover { background: var(--indigo-deep); }
+button.secondary {
+  background: transparent;
+  color: var(--indigo);
+}
+button.secondary:hover { background: rgba(43, 58, 103, 0.06); }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+input, select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  width: 100%;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+}
+th, td {
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.92rem;
+}
+th {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.8rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.topbar .brand { font-size: 1.15rem; color: var(--indigo-deep); }
+.topbar .role-tag {
+  font-size: 0.75rem;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+  margin-left: 0.6rem;
+}
+
+.content {
+  flex: 1;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.stat-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+.stat {
+  flex: 1;
+  min-width: 150px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--indigo);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+}
+.stat .value { font-family: "Source Serif Pro", Georgia, serif; font-size: 1.9rem; color: var(--indigo-deep); }
+.stat .label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+.status {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius);
+}
+.status.present, .status.paid { color: var(--green); background: rgba(63,107,74,0.1); }
+.status.absent, .status.overdue { color: var(--red); background: rgba(156,59,59,0.1); }
+.status.late, .status.pending { color: var(--amber); background: rgba(193,127,46,0.12); }
+.status.excused, .status.waived { color: var(--muted); background: rgba(107,114,128,0.1); }
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--indigo-deep);
+  padding: 1.5rem;
+}
+.login-card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 2.2rem;
+  width: 100%;
+  max-width: 380px;
+}
+.login-card h1 { font-size: 1.5rem; margin: 0 0 0.3rem; }
+.login-card p.tagline { color: var(--muted); margin: 0 0 1.6rem; font-size: 0.9rem; }
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+.error-text { color: var(--red); font-size: 0.85rem; margin-top: 0.6rem; }
+.hint { color: var(--muted); font-size: 0.8rem; margin-top: 1.2rem; }

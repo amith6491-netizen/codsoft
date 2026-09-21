@@ -1,0 +1,99 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String        @default("") // Adding default to prevent issues with existing rows
+  name         String?
+  role         String        @default("CUSTOMER") // CUSTOMER, STAFF, ADMIN
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  orders       Order[]
+  reservations Reservation[]
+}
+
+model Category {
+  id    String     @id @default(cuid())
+  name  String
+  items MenuItem[]
+}
+
+model MenuItem {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id                String      @id @default(cuid())
+  userId            String?
+  user              User?       @relation(fields: [userId], references: [id])
+  // Customer snapshot (for guest orders)
+  customerName      String?
+  customerEmail     String?
+  customerPhone     String?
+  // Order details
+  status            String      @default("PENDING") // PENDING, PREPARING, READY, COMPLETED, CANCELLED
+  total             Float
+  gst               Float       @default(0)
+  grandTotal        Float       @default(0)
+  // Payment
+  paymentMethod     String      @default("COD") // COD, UPI, CARD
+  paymentStatus     String      @default("PENDING") // PENDING, PAID, FAILED, CANCELLED
+  cashfreeOrderId   String?     @unique
+  cashfreePaymentId String?     @unique
+  cashfreePaymentSessionId String?
+  paymentError      String?
+  // Delivery
+  orderType         String      @default("DINE_IN") // DINE_IN, TAKEAWAY
+  tableNumber       String?
+  specialNote       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  items             OrderItem[]
+}
+
+model OrderItem {
+  id         String    @id @default(cuid())
+  orderId    String
+  order      Order     @relation(fields: [orderId], references: [id])
+  menuItemId String? // nullable — snapshot model doesn't need live FK
+  menuItem   MenuItem? @relation(fields: [menuItemId], references: [id])
+  // Snapshot of item details at time of order
+  itemName   String
+  itemPrice  Float
+  quantity   Int       @default(1)
+  subtotal   Float
+}
+
+model Table {
+  id           String        @id @default(cuid())
+  number       Int           @unique
+  capacity     Int
+  reservations Reservation[]
+}
+
+model Reservation {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  tableId   String
+  table     Table    @relation(fields: [tableId], references: [id])
+  date      DateTime
+  time      String
+  guests    Int
+  status    String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED
+  createdAt DateTime @default(now())
+}
