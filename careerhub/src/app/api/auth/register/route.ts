@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { createUserWithProfile, findUserByEmail } from "@/lib/repository";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name is too short"),
@@ -28,24 +28,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Company name is required for recruiters" }, { status: 400 });
   }
 
-  const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  const normalizedEmail = email.toLowerCase();
+  const existing = await findUserByEmail(normalizedEmail);
   if (existing) {
     return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email: email.toLowerCase(),
-      passwordHash,
-      role,
-      ...(role === "CANDIDATE"
-        ? { candidateProfile: { create: {} } }
-        : { recruiterProfile: { create: { company: company as string } } })
-    }
-  });
+  const user = await createUserWithProfile({ name, email: normalizedEmail, passwordHash, role, company });
 
   return NextResponse.json({ id: user.id, email: user.email, role: user.role }, { status: 201 });
 }

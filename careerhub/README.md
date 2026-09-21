@@ -6,7 +6,7 @@ resume-backed applications, candidate profiles, and recruiter dashboards.
 ## Stack
 
 - **Next.js 14** (App Router, TypeScript) — frontend + API routes
-- **PostgreSQL** + **Prisma** — data
+- **MongoDB** — data, accessed through the official Node.js driver
 - **NextAuth** (credentials + JWT) — auth, with `CANDIDATE` / `RECRUITER` roles
 - **Local disk storage** for resumes by default, with a one-file swap to S3
   (`src/lib/storage.ts`)
@@ -23,8 +23,7 @@ resume-backed applications, candidate profiles, and recruiter dashboards.
 
 ```bash
 npm install
-cp .env.example .env      # set DATABASE_URL and NEXTAUTH_SECRET
-npx prisma migrate dev --name init
+cp .env.example .env      # set MONGODB_URI, MONGODB_DB, and NEXTAUTH_SECRET
 npm run seed               # optional: demo recruiter + candidate + 2 jobs
 npm run dev
 ```
@@ -38,7 +37,8 @@ Seed accounts (password `password123`):
 ## Project structure
 
 ```
-prisma/schema.prisma        User, CandidateProfile, RecruiterProfile, Job, Application
+src/lib/mongodb.ts          Cached MongoDB client and indexes
+src/lib/repository.ts       MongoDB data access and response shaping
 src/lib/auth.ts             NextAuth config (credentials provider)
 src/lib/storage.ts          Resume storage — local by default, S3-ready
 src/app/api/                REST-style route handlers (jobs, applications, auth, upload)

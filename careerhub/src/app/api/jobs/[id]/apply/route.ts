@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createApplication, findApplicationByPair, findCandidateProfile, findRawJob } from "@/lib/repository";
 import { saveResume } from "@/lib/storage";
 
 // POST /api/jobs/:id/apply  (multipart/form-data: resume file + optional coverLetter)
@@ -11,14 +11,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "Only candidates can apply to jobs" }, { status: 403 });
   }
 
-  const job = await prisma.job.findUnique({ where: { id: params.id } });
+  const job = await findRawJob(params.id);
   if (!job || job.status !== "OPEN") {
     return NextResponse.json({ error: "This job is not accepting applications" }, { status: 400 });
   }
 
-  const alreadyApplied = await prisma.application.findUnique({
-    where: { jobId_candidateId: { jobId: params.id, candidateId: session.user.id } }
-  });
+  const alreadyApplied = await findApplicationByPair(params.id, session.user.id);
   if (alreadyApplied) {
     return NextResponse.json({ error: "You already applied to this job" }, { status: 409 });
   }
@@ -36,7 +34,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     resumeName = stored.fileName;
   } else {
     // Fall back to the resume already on the candidate's profile, if any.
-    const profile = await prisma.candidateProfile.findUnique({ where: { userId: session.user.id } });
+    const profile = await findCandidateProfile(session.user.id);
     if (!profile?.resumeUrl) {
       return NextResponse.json({ error: "Attach a resume or upload one to your profile first" }, { status: 400 });
     }
@@ -44,15 +42,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     resumeName = profile.resumeName ?? undefined;
   }
 
-  const application = await prisma.application.create({
-    data: {
-      jobId: params.id,
-      candidateId: session.user.id,
-      resumeUrl,
-      resumeName,
-      coverLetter
-    }
-  });
+  const application = await createApplication({ jobId: params.id, candidateId: session.user.id, resumeUrl, resumeName, coverLetter });
 
   return NextResponse.json(application, { status: 201 });
 }

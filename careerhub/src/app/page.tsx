@@ -21,18 +21,32 @@ export default function HomePage() {
   const [q, setQ] = useState("");
   const [location, setLocation] = useState("");
   const [type, setType] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
+    setError(null);
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (location) params.set("location", location);
     if (type) params.set("type", type);
 
-    const res = await fetch(`/api/jobs?${params.toString()}`);
-    const data = await res.json();
-    setJobs(data);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/jobs?${params.toString()}`);
+      const data: unknown = await res.json();
+      if (!res.ok || !Array.isArray(data)) {
+        const message = typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
+          ? data.error
+          : "Unable to load jobs right now.";
+        throw new Error(message);
+      }
+      setJobs(data as Job[]);
+    } catch (fetchError) {
+      setJobs([]);
+      setError(fetchError instanceof Error ? fetchError.message : "Unable to load jobs right now.");
+    } finally {
+      setLoading(false);
+    }
   }, [q, location, type]);
 
   useEffect(() => {
@@ -153,7 +167,10 @@ export default function HomePage() {
 
         <div className="grid gap-4">
           {loading && <p className="rounded-2xl border border-violet-100 bg-white/70 p-6 text-slate-600">Loading jobs…</p>}
-          {!loading && jobs.length === 0 && (
+          {!loading && error && (
+            <p role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">{error}</p>
+          )}
+          {!loading && !error && jobs.length === 0 && (
             <p className="rounded-2xl border border-violet-100 bg-white/70 p-6 text-slate-600">No jobs match that search yet. Try widening it.</p>
           )}
           {jobs.map((job) => (
