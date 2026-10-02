@@ -28,7 +28,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load from local storage on mount
   useEffect(() => {
-    setIsMounted(true);
     const savedCart = localStorage.getItem("dinedesk-cart");
     if (savedCart) {
       try {
@@ -37,6 +36,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         console.error("Failed to parse cart");
       }
     }
+    setIsMounted(true);
   }, []);
 
   // Save to local storage when items change
@@ -76,7 +76,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = () => {
+    setItems([]);
+    localStorage.removeItem("dinedesk-cart");
+  };
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -90,7 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         total,
-        itemCount: isMounted ? itemCount : 0,
+        itemCount,
       }}
     >
       {children}

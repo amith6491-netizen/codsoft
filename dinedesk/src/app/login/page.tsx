@@ -1,10 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { loginAction } from '@/actions/auth';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     async (prevState: any, formData: FormData) => {
       const result = await loginAction(formData);
@@ -12,6 +14,12 @@ export default function LoginPage() {
     },
     null
   );
+
+  useEffect(() => {
+    if (state?.success && state?.redirectTo) {
+      router.push(state.redirectTo);
+    }
+  }, [state, router]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

@@ -1,28 +1,9 @@
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { connectDB } from '@/lib/mongodb';
+import { getSession } from '@/lib/auth';
+import { Table, Reservation, User } from '@/lib/models';
 import { revalidatePath } from 'next/cache';
-
-const prisma = new PrismaClient();
-
-// Seed tables if none exist
-async function ensureTablesExist() {
-  const count = await prisma.table.count();
-  if (count === 0) {
-    await prisma.table.createMany({
-      data: [
-        { number: 1, capacity: 2 },
-        { number: 2, capacity: 2 },
-        { number: 3, capacity: 4 },
-        { number: 4, capacity: 4 },
-        { number: 5, capacity: 6 },
-        { number: 6, capacity: 6 },
-        { number: 7, capacity: 8 },
-        { number: 8, capacity: 8 },
-      ],
-    });
-  }
-}
 
 export type ReservationState = {
   success?: boolean;
@@ -38,11 +19,28 @@ export type ReservationState = {
   };
 };
 
+async function ensureTablesExist() {
+  const count = await Table.countDocuments();
+  if (count === 0) {
+    await Table.insertMany([
+      { number: 1, capacity: 2 },
+      { number: 2, capacity: 2 },
+      { number: 3, capacity: 4 },
+      { number: 4, capacity: 4 },
+      { number: 5, capacity: 6 },
+      { number: 6, capacity: 6 },
+      { number: 7, capacity: 8 },
+      { number: 8, capacity: 8 },
+    ]);
+  }
+}
+
 export async function makeReservationAction(
   prevState: ReservationState,
   formData: FormData
 ): Promise<ReservationState> {
   try {
+    await connectDB();
     await ensureTablesExist();
 
     const name = formData.get('name') as string;
@@ -53,12 +51,10 @@ export async function makeReservationAction(
     const guestsStr = formData.get('guests') as string;
     const guests = parseInt(guestsStr, 10);
 
-    // Validate required fields
     if (!name || !email || !date || !time || !guests) {
       return { error: 'Please fill in all required fields.' };
     }
 
-    // Validate date is in the future
     const reservationDate = new Date(date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -66,28 +62,27 @@ export async function makeReservationAction(
       return { error: 'Reservation date must be today or in the future.' };
     }
 
-    // Find an available table with enough capacity
-    const allTables = await prisma.table.findMany({
-      where: { capacity: { gte: guests } },
-      orderBy: { capacity: 'asc' },
-    });
+    const allTables = await Table.find(
+      { capacity: { $gte: guests } },
+      {},
+      { sort: { capacity: 1 } }
+    );
 
     if (allTables.length === 0) {
       return { error: `No tables available for ${guests} guests. Please try a smaller party size.` };
     }
 
-    // Check which tables are already booked at this date/time
-    const bookedTableIds = await prisma.reservation.findMany({
-      where: {
+    const bookedTableIds = await Reservation.find(
+      {
         date: reservationDate,
         time: time,
         status: 'CONFIRMED',
       },
-      select: { tableId: true },
-    });
+      { tableId: 1 }
+    );
 
-    const bookedIds = new Set(bookedTableIds.map((r) => r.tableId));
-    const availableTable = allTables.find((t) => !bookedIds.has(t.id));
+    const bookedIds = new Set(bookedTableIds.map((r: any) => r.tableId?.toString()));
+    const availableTable = allTables.find((t: any) => !bookedIds.has(t._id.toString()));
 
     if (!availableTable) {
       return {
@@ -95,25 +90,23 @@ export async function makeReservationAction(
       };
     }
 
-    // Find or create a user by email
-    let user = await prisma.user.findUnique({ where: { email } });
+    let user = await User.findOne({ email });
     if (!user) {
-      user = await prisma.user.create({
-        data: { email, name, password: '', role: 'CUSTOMER' },
+      user = await User.create({
+        email,
+        name,
+        password: null,
+        role: 'CUSTOMER',
       });
     }
 
-    // Create the reservation
-    const reservation = await prisma.reservation.create({
-      data: {
-        userId: user.id,
-        tableId: availableTable.id,
-        date: reservationDate,
-        time,
-        guests,
-        status: 'CONFIRMED',
-      },
-      include: { table: true },
+    const reservation = await Reservation.create({
+      userId: user._id,
+      tableId: availableTable._id,
+      date: reservationDate,
+      time,
+      guests,
+      status: 'CONFIRMED',
     });
 
     revalidatePath('/reservations');
@@ -122,8 +115,8 @@ export async function makeReservationAction(
       success: true,
       message: `🎉 Reservation confirmed!`,
       reservation: {
-        id: reservation.id,
-        tableNumber: reservation.table.number,
+        id: reservation._id.toString(),
+        tableNumber: availableTable.number,
         date,
         time,
         guests,

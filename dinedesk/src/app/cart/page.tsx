@@ -4,68 +4,115 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeft, Minus, Plus, Trash2, CreditCard } from "lucide-react";
-import { load } from "@cashfreepayments/cashfree-js";
+import { ArrowLeft, Minus, Plus, Trash2, CreditCard, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+
+const UPI_PROVIDERS = [
+  { id: "google-pay", name: "Google Pay", icon: "🔵" },
+  { id: "paytm", name: "Paytm", icon: "🟠" },
+  { id: "phonepe", name: "PhonePe", icon: "🟣" },
+  { id: "upi-default", name: "Any UPI App", icon: "📱" },
+];
 
 export default function CartPage() {
   const { items, updateQuantity, removeFromCart, clearCart, total } = useCart();
   const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [upiProvider, setUpiProvider] = useState("google-pay");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
-  const tax = Math.round(total * 0.18); // 18% GST
+  const tax = Math.round(total * 0.18);
   const finalTotal = total + tax;
 
   const handleCheckout = async () => {
     setIsProcessing(true);
     setError(null);
+    
     try {
       const response = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentMethod,
+          upiProvider: paymentMethod === "UPI" ? upiProvider : undefined,
           items: items.map((item) => ({ id: item.id, quantity: item.quantity })),
         }),
       });
-      const order = await response.json();
-      if (!response.ok) throw new Error(order.error || "Unable to start payment.");
 
-      const cashfree = await load({ mode: "sandbox" });
-      if (!cashfree) throw new Error("Cashfree checkout could not load.");
-      const result = await cashfree.checkout({ paymentSessionId: order.paymentSessionId, redirectTarget: "_modal" });
-      if (result?.error) {
-        await fetch("/api/payments/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: order.orderId, status: "CANCELLED", error: result.error.message }),
-        });
+      const order = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(order.error || "Unable to start payment.");
+      }
+
+      setOrderId(order.orderId);
+      setShowConfirmation(true);
+
+      // For Cash on Delivery, skip payment verification
+      if (paymentMethod === "CASH") {
+        clearCart();
+        localStorage.removeItem("dinedesk-cart");
         setIsProcessing(false);
-        setError(result.error.message || "Payment was cancelled.");
+        
+        // Redirect after delay
+        setTimeout(() => {
+          router.push(`/orders/${order.orderId}?payment=pending`);
+        }, 1500);
         return;
       }
+
+      // For other payment methods, verify payment
       const verification = await fetch("/api/payments/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, cashfreePaymentId: result?.paymentDetails?.cf_payment_id }),
+        body: JSON.stringify({ orderId: order.orderId }),
       });
+
       const payment = await verification.json();
-      if (payment.status === "PAID") {
+
+      if (payment.status === "PAID" || payment.status === "PENDING") {
         clearCart();
-        router.push(`/orders/${order.orderId}?payment=success`);
-      } else if (payment.status === "FAILED") {
-        setError(payment.error || "Payment failed. Please try again.");
+        localStorage.removeItem("dinedesk-cart");
+        setIsProcessing(false);
+        
+        // Redirect after delay
+        setTimeout(() => {
+          router.push(`/orders/${order.orderId}?payment=success`);
+        }, 1500);
       } else {
-        setError("Payment is pending. Your order will update when Cashfree confirms it.");
+        setIsProcessing(false);
+        setShowConfirmation(false);
+        setError(payment.error || "Payment failed. Please try again.");
       }
-      setIsProcessing(false);
     } catch (checkoutError) {
       setIsProcessing(false);
+      setShowConfirmation(false);
       setError(checkoutError instanceof Error ? checkoutError.message : "Unable to start payment.");
     }
   };
+
+  if (showConfirmation && orderId) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="bg-card border border-border rounded-3xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          <h2 className="text-2xl font-outfit font-bold mb-2">Order Confirmed!</h2>
+          <p className="text-foreground/70 mb-2">Your order has been placed successfully</p>
+          <p className="text-sm text-foreground/60 mb-6">Order ID: {orderId}</p>
+          <p className="text-lg font-bold text-primary mb-6">₹{finalTotal.toLocaleString('en-IN')}</p>
+          <p className="text-sm text-foreground/60 mb-4">{isProcessing ? "Processing your payment..." : "Redirecting to order summary..."}</p>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -77,9 +124,9 @@ export default function CartPage() {
         </div>
         <h2 className="text-3xl font-outfit font-bold mb-4">Your cart is empty</h2>
         <p className="text-foreground/70 mb-8 max-w-md text-center">
-          Looks like you haven&apos;t added anything to your cart yet. Browse our delicious menu and find something you love!
+          Looks like you haven&apos;t added anything to your cart yet. Browse our delicious menu!
         </p>
-        <Link href="/menu" className="px-8 py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary-hover transition-colors">
+        <Link href="/menu" className="px-8 py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors">
           Explore Menu
         </Link>
       </div>
@@ -170,25 +217,70 @@ export default function CartPage() {
               <span className="font-bold text-2xl text-primary">₹{finalTotal.toLocaleString('en-IN')}</span>
             </div>
 
+            {/* Payment Methods */}
             <fieldset className="mb-6 space-y-2">
               <legend className="font-semibold mb-3">Payment method</legend>
               {[
                 ["UPI", "UPI apps"],
+                ["CASH", "Cash on Delivery"],
                 ["CARD", "Credit or debit card"],
-                ["NETBANKING", "Net banking"],
-                ["WALLET", "Wallets"],
               ].map(([value, label]) => (
-                <label key={value} className="flex items-center gap-3 border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-primary">
-                  <input type="radio" name="paymentMethod" value={value} checked={paymentMethod === value} onChange={() => setPaymentMethod(value)} className="accent-primary" />
+                <label key={value} className="flex items-center gap-3 border border-border rounded-xl px-4 py-3 cursor-pointer hover:border-primary transition-colors">
+                  <input 
+                    type="radio" 
+                    name="paymentMethod" 
+                    value={value} 
+                    checked={paymentMethod === value} 
+                    onChange={() => setPaymentMethod(value)} 
+                    className="accent-primary" 
+                  />
                   <span>{label}</span>
                 </label>
               ))}
             </fieldset>
 
-            {error && <p role="alert" className="mb-4 text-sm text-red-600">{error}</p>}
+            {/* UPI Provider Selection */}
+            {paymentMethod === "UPI" && (
+              <fieldset className="mb-6 space-y-2">
+                <legend className="font-semibold mb-3 text-sm">Select UPI App</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  {UPI_PROVIDERS.map((provider) => (
+                    <label 
+                      key={provider.id}
+                      className={`flex items-center gap-2 border-2 rounded-lg px-3 py-2 cursor-pointer transition-all ${
+                        upiProvider === provider.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="upiProvider" 
+                        value={provider.id} 
+                        checked={upiProvider === provider.id}
+                        onChange={() => setUpiProvider(provider.id)}
+                        className="accent-primary"
+                      />
+                      <span className="text-sm">{provider.icon} {provider.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            {error && (
+              <p role="alert" className="mb-4 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+                {error}
+              </p>
+            )}
             
-            <button onClick={handleCheckout} disabled={isProcessing} className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 group shadow-md shadow-primary/20 disabled:opacity-60">
-              <CreditCard className="w-5 h-5" /> {isProcessing ? "Starting secure checkout..." : "Pay securely"}
+            <button 
+              onClick={handleCheckout} 
+              disabled={isProcessing} 
+              className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 shadow-md shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <CreditCard className="w-5 h-5" /> 
+              {isProcessing ? "Processing..." : "Place Order"}
             </button>
           </div>
         </div>

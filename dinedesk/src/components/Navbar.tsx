@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Utensils, ShoppingBag, LogIn, LogOut, UserPlus, User } from "lucide-react";
+import { Utensils, LogIn, LogOut, UserPlus, User } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { logoutAction } from "@/actions/auth";
 import { NavbarCart } from "./NavbarCart";
+import { LogoutButton } from "./LogoutButton";
 
 export async function Navbar() {
   const session = await getSession();
-  const user = session?.user as { name?: string; email?: string; role?: string } | undefined;
+  const user = session?.user as { name?: string; email?: string; role?: string; id?: string } | undefined;
 
   return (
     <header className="sticky top-0 z-50 w-full glass-effect">
@@ -31,21 +31,14 @@ export async function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-sm text-foreground/70">
-                <div className="bg-primary/10 p-1.5 rounded-full">
-                  <User className="w-4 h-4 text-primary" />
-                </div>
-                <span className="font-medium">{user.name || user.email}</span>
-              </div>
-              <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground/70 hover:text-foreground transition-all border border-border/30"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
-              </form>
+              <Link
+                href="/profile"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-all border border-primary/30"
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium truncate max-w-[120px]">{user.name || user.email}</span>
+              </Link>
+              <LogoutButton />
             </div>
           ) : (
             <div className="flex items-center gap-2">

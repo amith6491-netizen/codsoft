@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dinedesk-app
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - CASHFREE_CLIENT_ID=${CASHFREE_CLIENT_ID:-sandbox}
+      - CASHFREE_CLIENT_SECRET=${CASHFREE_CLIENT_SECRET:-sandbox}
+      - CASHFREE_ENVIRONMENT=${CASHFREE_ENVIRONMENT:-SANDBOX}
+      - MONGODB_URI=mongodb://mongodb:27017/dinedesk
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: sync
+          path: ./public
+          target: /app/public
+    networks:
+      - dinedesk-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  mongodb:
+    image: mongo:latest
+    container_name: dinedesk-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=dinedesk
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - dinedesk-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  dinedesk-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
