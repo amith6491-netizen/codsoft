@@ -3,14 +3,18 @@
 import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { logoutAction } from '@/actions/auth';
+import { useCart } from '@/context/CartContext';
 
 export function LogoutButton() {
   const router = useRouter();
+  const { clearCart } = useCart();
 
   const handleLogout = async () => {
+    clearCart();
     const result = await logoutAction();
     if (result?.success && result?.redirectTo) {
       router.push(result.redirectTo);
+      router.refresh();
     }
   };
 

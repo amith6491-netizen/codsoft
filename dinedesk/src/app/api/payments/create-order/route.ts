@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     let userId: Types.ObjectId;
     try {
       userId = new Types.ObjectId(user.id);
-    } catch (err) {
+    } catch {
       console.error('Invalid userId format:', user.id);
       return NextResponse.json({ error: 'Invalid session. Please log in again.' }, { status: 401 });
     }
@@ -55,6 +55,7 @@ export async function POST(request: Request) {
       };
     });
 
+    const total = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
     // For Cash on Delivery, skip payment but still create order
     const paymentStatus = paymentMethod === 'CASH' ? 'PENDING' : 'PAID';
     const gst = Math.round(total * 0.18);

@@ -1,9 +1,9 @@
 'use server';
 
 import { connectDB } from '@/lib/mongodb';
-import { getSession } from '@/lib/auth';
 import { Table, Reservation, User } from '@/lib/models';
 import { revalidatePath } from 'next/cache';
+import { Types } from 'mongoose';
 
 export type ReservationState = {
   success?: boolean;
@@ -17,6 +17,16 @@ export type ReservationState = {
     guests: number;
     name: string;
   };
+};
+
+type TableRecord = {
+  _id: Types.ObjectId;
+  number: number;
+  capacity: number;
+};
+
+type BookedRecord = {
+  tableId?: Types.ObjectId;
 };
 
 async function ensureTablesExist() {
@@ -62,27 +72,27 @@ export async function makeReservationAction(
       return { error: 'Reservation date must be today or in the future.' };
     }
 
-    const allTables = await Table.find(
+    const allTables = (await Table.find(
       { capacity: { $gte: guests } },
       {},
       { sort: { capacity: 1 } }
-    );
+    ).lean()) as unknown as TableRecord[];
 
     if (allTables.length === 0) {
       return { error: `No tables available for ${guests} guests. Please try a smaller party size.` };
     }
 
-    const bookedTableIds = await Reservation.find(
+    const bookedTableIds = (await Reservation.find(
       {
         date: reservationDate,
         time: time,
         status: 'CONFIRMED',
       },
       { tableId: 1 }
-    );
+    ).lean()) as unknown as BookedRecord[];
 
-    const bookedIds = new Set(bookedTableIds.map((r: any) => r.tableId?.toString()));
-    const availableTable = allTables.find((t: any) => !bookedIds.has(t._id.toString()));
+    const bookedIds = new Set(bookedTableIds.map((r) => r.tableId?.toString()));
+    const availableTable = allTables.find((t) => !bookedIds.has(t._id.toString()));
 
     if (!availableTable) {
       return {
@@ -95,9 +105,13 @@ export async function makeReservationAction(
       user = await User.create({
         email,
         name,
+        phone: phone || null,
         password: null,
         role: 'CUSTOMER',
       });
+    } else if (phone && !user.phone) {
+      user.phone = phone;
+      await user.save();
     }
 
     const reservation = await Reservation.create({

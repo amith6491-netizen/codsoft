@@ -84,7 +84,7 @@ export default function Home() {
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-3xl md:text-4xl font-outfit font-bold mb-4">Featured Delights</h2>
-              <p className="text-foreground/70 max-w-2xl">Discover our chef's handpicked favorites that keep our guests coming back for more.</p>
+              <p className="text-foreground/70 max-w-2xl">Discover our chef&apos;s handpicked favorites that keep our guests coming back for more.</p>
             </div>
             <Link href="/menu" className="hidden md:flex text-primary font-medium items-center gap-1 hover:underline">
               View full menu <ArrowRight className="w-4 h-4" />

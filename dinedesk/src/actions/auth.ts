@@ -3,7 +3,6 @@
 import bcrypt from 'bcryptjs';
 import { encrypt } from '@/lib/auth';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { connectDB } from '@/lib/mongodb';
 import { User } from '@/lib/models';
 

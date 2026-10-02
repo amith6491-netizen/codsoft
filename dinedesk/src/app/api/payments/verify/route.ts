@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     let userObjectId: Types.ObjectId;
     try {
       userObjectId = new Types.ObjectId(userId);
-    } catch (err) {
+    } catch {
       console.error('Invalid userId format:', userId);
       return NextResponse.json({ error: 'Invalid session.' }, { status: 401 });
     }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     let orderObjectId: Types.ObjectId;
     try {
       orderObjectId = new Types.ObjectId(orderId);
-    } catch (err) {
+    } catch {
       return NextResponse.json({ error: 'Invalid order ID.' }, { status: 400 });
     }
 

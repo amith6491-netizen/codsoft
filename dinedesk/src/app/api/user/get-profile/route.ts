@@ -18,7 +18,7 @@ export async function GET() {
     let userObjectId: Types.ObjectId;
     try {
       userObjectId = new Types.ObjectId(userId);
-    } catch (err) {
+    } catch {
       return NextResponse.json({ error: 'Invalid session.' }, { status: 401 });
     }
 

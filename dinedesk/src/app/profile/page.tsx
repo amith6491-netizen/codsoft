@@ -96,7 +96,7 @@ export default function ProfilePage() {
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to update profile' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'An error occurred. Please try again.' });
     } finally {
       setIsSaving(false);

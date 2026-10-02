@@ -1,32 +1,41 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/dinedesk';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/dinedesk';
 
-let cached = global as any;
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
 
-if (!cached.mongoose) {
-  cached.mongoose = { conn: null, promise: null };
+declare global {
+  var mongooseCache: MongooseCache | undefined;
+}
+
+const cached: MongooseCache = globalThis.mongooseCache ?? { conn: null, promise: null };
+
+if (!globalThis.mongooseCache) {
+  globalThis.mongooseCache = cached;
 }
 
 export async function connectDB() {
-  if (cached.mongoose.conn) {
-    return cached.mongoose.conn;
+  if (cached.conn) {
+    return cached.conn;
   }
 
-  if (!cached.mongoose.promise) {
-    cached.mongoose.promise = mongoose.connect(MONGODB_URI, {
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
   }
 
   try {
-    cached.mongoose.conn = await cached.mongoose.promise;
+    cached.conn = await cached.promise;
   } catch (e) {
-    cached.mongoose.promise = null;
+    cached.promise = null;
     throw e;
   }
 
-  return cached.mongoose.conn;
+  return cached.conn;
 }
 
 export default mongoose;

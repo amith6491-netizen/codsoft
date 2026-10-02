@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Utensils, LogIn, LogOut, UserPlus, User } from "lucide-react";
+import { Utensils, LogIn, UserPlus, User } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { NavbarCart } from "./NavbarCart";
 import { LogoutButton } from "./LogoutButton";

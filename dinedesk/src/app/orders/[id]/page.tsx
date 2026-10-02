@@ -6,6 +6,13 @@ import { Order } from '@/lib/models';
 import { Check, Package, Clock, MapPin } from 'lucide-react';
 import { Types } from 'mongoose';
 
+interface OrderItem {
+  itemName: string;
+  itemPrice: number;
+  quantity: number;
+  subtotal: number;
+}
+
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
   await connectDB();
 
@@ -112,7 +119,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
         
         {/* Items */}
         <div className="space-y-4 mb-6 border-b border-border pb-6">
-          {order.items.map((item: any, idx: number) => (
+          {order.items.map((item: OrderItem, idx: number) => (
             <div key={idx} className="flex justify-between items-center">
               <div>
                 <p className="font-semibold">{item.itemName}</p>

@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { registerAction } from '@/actions/auth';
 import Link from 'next/link';
 
+type AuthActionState = { error?: string; success?: boolean; redirectTo?: string } | null;
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
+  const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
+    async (_prevState, formData: FormData) => {
       const result = await registerAction(formData);
       return result;
     },

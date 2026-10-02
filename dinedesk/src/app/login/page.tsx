@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { loginAction } from '@/actions/auth';
 import Link from 'next/link';
 
+type AuthActionState = { error?: string; success?: boolean; redirectTo?: string } | null;
+
 export default function LoginPage() {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(
-    async (prevState: any, formData: FormData) => {
+  const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
+    async (_prevState, formData: FormData) => {
       const result = await loginAction(formData);
       return result;
     },
@@ -86,7 +88,7 @@ export default function LoginPage() {
         </form>
         
         <div className="relative z-10 mt-6 text-center text-sm text-foreground/60">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors">
             Sign up
           </Link>
