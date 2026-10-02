@@ -99,3 +99,26 @@ const reservationSchema = new mongoose.Schema(
 );
 
 export const Reservation = mongoose.models.Reservation || mongoose.model('Reservation', reservationSchema);
+
+// Restaurant Schema
+const restaurantSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    tagline: String,
+    description: String,
+    cuisine: [String],
+    rating: { type: Number, default: 4.5 },
+    reviewsCount: { type: Number, default: 100 },
+    deliveryTime: { type: String, default: '30-40 mins' },
+    priceForTwo: { type: Number, default: 800 },
+    location: String,
+    address: String,
+    imageUrl: String,
+    featured: { type: Boolean, default: false },
+    menuItemIds: [Number],
+  },
+  { timestamps: true }
+);
+
+export const Restaurant = mongoose.models.Restaurant || mongoose.model('Restaurant', restaurantSchema);

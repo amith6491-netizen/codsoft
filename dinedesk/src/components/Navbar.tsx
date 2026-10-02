@@ -19,6 +19,7 @@ export async function Navbar() {
         </Link>
         
         <nav className="hidden md:flex items-center gap-8 font-medium">
+          <Link href="/restaurants" className="text-foreground/80 hover:text-primary transition-colors">Restaurants</Link>
           <Link href="/menu" className="text-foreground/80 hover:text-primary transition-colors">Menu</Link>
           <Link href="/reservations" className="text-foreground/80 hover:text-primary transition-colors">Reservations</Link>
           {user?.role === 'ADMIN' || user?.role === 'STAFF' ? (
