@@ -18,12 +18,12 @@ export async function Navbar() {
           <span className="font-outfit text-xl font-bold tracking-tight">DineDesk</span>
         </Link>
         
-        <nav className="hidden md:flex items-center gap-8 font-medium">
+        <nav className="flex items-center gap-3 sm:gap-6 md:gap-8 font-medium text-sm md:text-base">
           <Link href="/restaurants" className="text-foreground/80 hover:text-primary transition-colors">Restaurants</Link>
           <Link href="/menu" className="text-foreground/80 hover:text-primary transition-colors">Menu</Link>
-          <Link href="/reservations" className="text-foreground/80 hover:text-primary transition-colors">Reservations</Link>
+          <Link href="/reservations" className="hidden sm:inline-block text-foreground/80 hover:text-primary transition-colors">Reservations</Link>
           {user?.role === 'ADMIN' || user?.role === 'STAFF' ? (
-            <Link href="/kitchen" className="text-foreground/80 hover:text-primary transition-colors">Kitchen</Link>
+            <Link href="/kitchen" className="hidden md:inline-block text-foreground/80 hover:text-primary transition-colors">Kitchen</Link>
           ) : null}
         </nav>
         
