@@ -13,8 +13,9 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-foreground/60">
               <li><a href="/menu" className="hover:text-primary transition-colors">Menu</a></li>
+              <li><a href="/cart" className="hover:text-primary transition-colors">Restaurants</a></li>
               <li><a href="/reservations" className="hover:text-primary transition-colors">Reservations</a></li>
-              <li><a href="/kitchen" className="hover:text-primary transition-colors">Staff Dashboard</a></li>
+              <li><a href="/kitchen" className="hover:text-primary transition-colors">Admin Dashboard</a></li>
             </ul>
           </div>
           <div>
