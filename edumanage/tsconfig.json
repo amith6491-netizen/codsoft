@@ -37,8 +37,6 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "careerhub",
-    "edumanage"
+    "node_modules"
   ]
 }
