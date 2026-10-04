@@ -24,34 +24,17 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const isInitialLoadDone = React.useRef(false);
 
-  // Load from local storage on mount
+  // Clear any legacy persisted cart from localStorage on startup
   useEffect(() => {
-    const savedCart = localStorage.getItem("dinedesk-cart");
-    if (savedCart) {
+    if (typeof window !== "undefined") {
       try {
-        const parsed = JSON.parse(savedCart);
-        queueMicrotask(() => {
-          setItems(parsed);
-        });
-      } catch {
-        console.error("Failed to parse cart");
-      }
-    }
-    isInitialLoadDone.current = true;
-  }, []);
-
-  // Save to local storage when items change
-  useEffect(() => {
-    if (isInitialLoadDone.current) {
-      if (items.length === 0) {
         localStorage.removeItem("dinedesk-cart");
-      } else {
-        localStorage.setItem("dinedesk-cart", JSON.stringify(items));
+      } catch {
+        // ignore errors
       }
     }
-  }, [items]);
+  }, []);
 
   const addToCart = (newItem: Omit<CartItem, "quantity">) => {
     setItems((currentItems) => {

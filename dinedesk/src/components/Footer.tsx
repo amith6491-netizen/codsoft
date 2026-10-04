@@ -20,10 +20,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contact</h3>
             <ul className="space-y-2 text-foreground/60">
-              <li>123 Culinary Ave</li>
-              <li>Food City, FC 90210</li>
-              <li>contact@dinedesk.app</li>
-              <li>(555) 123-4567</li>
+              <li>Manipal, Karnataka</li>
+              <li>Udupi, 576104</li>
+              <li>amith6491@gmail.com</li>
+              <li>(+91) 7899472591</li>
             </ul>
           </div>
           <div>

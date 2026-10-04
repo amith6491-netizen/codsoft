@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Plus, Search, Check, Utensils, Store } from 'lucide-react';
+import { Plus, Search, Check, Utensils, Store, UtensilsCrossed } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useState, useMemo, Suspense } from 'react';
 import { menuItems, MenuItemData } from '@/lib/menu-items';
@@ -213,6 +213,11 @@ function MenuContent() {
               </div>
 
               <div className="p-5 flex flex-col flex-1">
+                {item.restaurantName && (
+                  <span className="text-[11px] font-semibold text-primary/90 mb-1 line-clamp-1 flex items-center gap-1">
+                    <UtensilsCrossed className="w-3 h-3" /> {item.restaurantName}
+                  </span>
+                )}
                 <h3 className="text-base font-bold font-outfit mb-2 leading-tight">
                   {item.name}
                 </h3>

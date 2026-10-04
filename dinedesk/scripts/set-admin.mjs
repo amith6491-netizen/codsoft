@@ -58,11 +58,12 @@ async function run() {
   // 2. Try Docker container if not updated yet
   if (!updated) {
     try {
+      const script = `db.users.updateOne({ email: "${email.toLowerCase()}" }, { $set: { role: "${role}" } });`;
       const dockerRes = execSync(
-        `docker exec dinedesk-mongodb mongosh dinedesk --quiet --eval "JSON.stringify(db.users.updateOne({ email: '${email.toLowerCase()}' }, { \\$set: { role: '${role}' } }))"`,
-        { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf8' }
+        `docker exec -i dinedesk-mongodb mongosh dinedesk --quiet`,
+        { input: script, stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf8' }
       );
-      if (dockerRes.includes('"matchedCount":1') || dockerRes.includes('matchedCount: 1')) {
+      if (dockerRes.includes('matchedCount: 1') || dockerRes.includes('"matchedCount":1') || dockerRes.includes('matchedCount:1')) {
         updated = true;
       }
     } catch {
