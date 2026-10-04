@@ -14,7 +14,7 @@ type Applicant = {
     name: string;
     email: string;
     candidateProfile: { headline: string | null; location: string | null; skills: string[] } | null;
-  };
+  } | null;
 };
 
 const statuses = ["APPLIED", "UNDER_REVIEW", "SHORTLISTED", "REJECTED", "HIRED"] as const;
@@ -56,9 +56,9 @@ export default function ApplicantsPage({ params }: { params: { id: string } }) {
           <div key={a.id} className="border border-ink-100 bg-white p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-ink-900">{a.candidate.name}</p>
-                <p className="text-sm text-ink-600">{a.candidate.email}</p>
-                {a.candidate.candidateProfile?.headline && (
+                <p className="text-ink-900">{a.candidate?.name ?? "Applicant"}</p>
+                <p className="text-sm text-ink-600">{a.candidate?.email ?? ""}</p>
+                {a.candidate?.candidateProfile?.headline && (
                   <p className="mt-1 text-sm text-ink-600">{a.candidate.candidateProfile.headline}</p>
                 )}
               </div>

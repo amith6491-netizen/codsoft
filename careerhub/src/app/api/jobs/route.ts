@@ -50,17 +50,26 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "RECRUITER") return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   const body = await req.json();
+
+  const title = String(body.title || "").trim();
+  const description = String(body.description || "").trim();
+  const location = String(body.location || "").trim();
+
+  if (!title || !description || !location) {
+    return NextResponse.json({ error: "Title, description, and location are required" }, { status: 400 });
+  }
+
   const job = await createJob({
     recruiterId: session.user.id,
-    title: String(body.title || "").trim(),
-    description: String(body.description || "").trim(),
-    location: String(body.location || "").trim(),
+    title,
+    description,
+    location,
     type: String(body.type || "FULL_TIME"),
     salaryMin: body.salaryMin == null ? null : Number(body.salaryMin),
     salaryMax: body.salaryMax == null ? null : Number(body.salaryMax),
     skills: Array.isArray(body.skills) ? body.skills.map(String) : [],
     status: "OPEN"
   });
-  if (!job.title || !job.description || !job.location) return NextResponse.json({ error: "Title, description, and location are required" }, { status: 400 });
+
   return NextResponse.json(job, { status: 201 });
 }

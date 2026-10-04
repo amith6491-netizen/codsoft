@@ -11,7 +11,7 @@ type Job = {
   skills: string[];
   salaryMin: number | null;
   salaryMax: number | null;
-  recruiter: { recruiterProfile: { company: string } | null };
+  recruiter: { recruiterProfile: { company: string } | null } | null;
   _count: { applications: number };
 };
 
@@ -178,7 +178,7 @@ export default function HomePage() {
               key={job.id}
               id={job.id}
               title={job.title}
-              company={job.recruiter.recruiterProfile?.company ?? "Unknown company"}
+              company={job.recruiter?.recruiterProfile?.company ?? "Unknown company"}
               location={job.location}
               type={job.type}
               skills={job.skills}

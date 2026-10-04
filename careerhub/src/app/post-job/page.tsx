@@ -82,12 +82,24 @@ export default function PostJobPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <label className="grid gap-1 text-sm">
-            Salary min (optional)
-            <input type="number" value={salaryMin} onChange={(e) => setSalaryMin(e.target.value)} className="border border-ink-200 bg-white px-4 py-3" />
+            Salary min (₹ / INR, optional)
+            <input
+              type="number"
+              placeholder="e.g. 800000 (8 LPA)"
+              value={salaryMin}
+              onChange={(e) => setSalaryMin(e.target.value)}
+              className="border border-ink-200 bg-white px-4 py-3"
+            />
           </label>
           <label className="grid gap-1 text-sm">
-            Salary max (optional)
-            <input type="number" value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} className="border border-ink-200 bg-white px-4 py-3" />
+            Salary max (₹ / INR, optional)
+            <input
+              type="number"
+              placeholder="e.g. 1400000 (14 LPA)"
+              value={salaryMax}
+              onChange={(e) => setSalaryMax(e.target.value)}
+              className="border border-ink-200 bg-white px-4 py-3"
+            />
           </label>
         </div>
         <label className="grid gap-1 text-sm">

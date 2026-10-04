@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatSalary } from "@/lib/format";
 
 type JobCardProps = {
   id: string;
@@ -6,7 +7,7 @@ type JobCardProps = {
   company: string;
   location: string;
   type: string;
-  skills: string[];
+  skills?: string[];
   salaryMin?: number | null;
   salaryMax?: number | null;
 };
@@ -19,7 +20,7 @@ const typeLabels: Record<string, string> = {
   REMOTE: "Remote"
 };
 
-export default function JobCard({ id, title, company, location, type, skills, salaryMin, salaryMax }: JobCardProps) {
+export default function JobCard({ id, title, company, location, type, skills = [], salaryMin, salaryMax }: JobCardProps) {
   return (
     <Link
       href={`/jobs/${id}`}
@@ -54,9 +55,7 @@ export default function JobCard({ id, title, company, location, type, skills, sa
       <div className="mt-5 flex items-center justify-between gap-3 border-t border-violet-100 pt-4">
         {(salaryMin || salaryMax) && (
           <p className="text-sm font-semibold text-emerald-600">
-            {salaryMin && salaryMax
-              ? `$${salaryMin.toLocaleString()} – $${salaryMax.toLocaleString()}`
-              : `From $${(salaryMin ?? salaryMax)!.toLocaleString()}`}
+            {formatSalary(salaryMin, salaryMax)}
           </p>
         )}
         <span className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white">

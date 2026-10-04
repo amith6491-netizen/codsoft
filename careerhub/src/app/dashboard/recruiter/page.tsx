@@ -10,7 +10,7 @@ type Job = {
   location: string;
   status: string;
   createdAt: string;
-  _count: { applications: number };
+  _count?: { applications: number };
 };
 
 export default function RecruiterDashboard() {
@@ -49,7 +49,7 @@ export default function RecruiterDashboard() {
         </div>
         <div className="metric-card rounded-[1.6rem] p-5">
           <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Total applicants</p>
-          <p className="mt-3 text-3xl font-semibold text-slate-900">{jobs.reduce((sum, j) => sum + j._count.applications, 0)}</p>
+          <p className="mt-3 text-3xl font-semibold text-slate-900">{jobs.reduce((sum, j) => sum + (j._count?.applications ?? 0), 0)}</p>
         </div>
         <div className="metric-card rounded-[1.6rem] p-5">
           <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Live jobs</p>
@@ -72,7 +72,7 @@ export default function RecruiterDashboard() {
               <p className="mt-1 text-sm text-slate-600">{job.location} — {job.status}</p>
             </div>
             <Link href={`/jobs/${job.id}/applicants`} className="rounded-full bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700">
-              {job._count.applications} applicant{job._count.applications === 1 ? "" : "s"}
+              {job._count?.applications ?? 0} applicant{(job._count?.applications ?? 0) === 1 ? "" : "s"}
             </Link>
           </div>
         ))}

@@ -8,7 +8,7 @@ type Application = {
   id: string;
   status: string;
   appliedAt: string;
-  job: { id: string; title: string; location: string };
+  job: { id: string; title: string; location: string } | null;
 };
 
 const statusColors: Record<string, string> = {
@@ -99,10 +99,14 @@ export default function CandidateDashboard() {
         {applications.map((app) => (
           <div key={app.id} className="job-card flex items-center justify-between gap-4">
             <div>
-              <Link href={`/jobs/${app.job.id}`} className="text-xl font-semibold text-slate-900 hover:text-violet-700">
-                {app.job.title}
-              </Link>
-              <p className="mt-1 text-sm text-slate-600">{app.job.location}</p>
+              {app.job ? (
+                <Link href={`/jobs/${app.job.id}`} className="text-xl font-semibold text-slate-900 hover:text-violet-700">
+                  {app.job.title}
+                </Link>
+              ) : (
+                <span className="text-xl font-semibold text-slate-500">Job no longer available</span>
+              )}
+              <p className="mt-1 text-sm text-slate-600">{app.job?.location ?? "N/A"}</p>
             </div>
             <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${statusColors[app.status] ?? "border-slate-200 bg-slate-50 text-slate-700"}`}>
               {app.status.replace("_", " ")}

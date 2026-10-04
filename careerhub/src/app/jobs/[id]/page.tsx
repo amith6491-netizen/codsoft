@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { formatSalary } from "@/lib/format";
 
 type Job = {
   id: string;
@@ -13,7 +14,7 @@ type Job = {
   skills: string[];
   salaryMin: number | null;
   salaryMax: number | null;
-  recruiter: { name: string; recruiterProfile: { company: string; companyWebsite: string | null } | null };
+  recruiter: { name: string; recruiterProfile: { company: string; companyWebsite: string | null } | null } | null;
 };
 
 export default function JobDetailPage({ params }: { params: { id: string } }) {
@@ -57,8 +58,20 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       <article>
         <h1 className="text-4xl text-ink-900">{job.title}</h1>
         <p className="mt-2 text-ink-600">
-          {job.recruiter.recruiterProfile?.company ?? job.recruiter.name} — {job.location}
+          {job.recruiter?.recruiterProfile?.company ?? job.recruiter?.name ?? "Unknown recruiter"} — {job.location}
         </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <span className="pill-tag whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-violet-700">
+            {job.type.replace("_", " ")}
+          </span>
+          {(job.salaryMin || job.salaryMax) && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-xs font-semibold text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {formatSalary(job.salaryMin, job.salaryMax)}
+            </span>
+          )}
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {job.skills.map((skill) => (

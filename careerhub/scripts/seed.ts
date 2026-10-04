@@ -1,16 +1,42 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import bcrypt from "bcryptjs";
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
-if (!uri) throw new Error("MONGODB_URI is required");
+// Load .env.local if not already provided in process.env
+function loadEnv() {
+  if (!process.env.MONGODB_URI) {
+    const envPaths = [
+      path.resolve(process.cwd(), ".env.local"),
+      path.resolve(process.cwd(), ".env"),
+    ];
+    for (const envPath of envPaths) {
+      if (fs.existsSync(envPath)) {
+        const lines = fs.readFileSync(envPath, "utf-8").split("\n");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith("#")) continue;
+          const match = trimmed.match(/^([\w.-]+)\s*=\s*(.*)?$/);
+          if (match) {
+            const key = match[1];
+            let val = match[2] || "";
+            val = val.trim().replace(/^['"](.*)['"]$/, "$1");
+            if (!process.env[key]) {
+              process.env[key] = val;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-const client = new MongoClient(uri);
-const db = client.db(process.env.MONGODB_DB || "careerhub");
-const now = new Date();
-const passwordHash = await bcrypt.hash("password123", 10);
-const recruiterId = randomUUID();
-const candidateId = randomUUID();
+loadEnv();
+
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017";
+const dbName = process.env.MONGODB_DB || "careerhub";
+
 const featuredJobs = [
   { title: "Frontend Engineer", description: "Build and ship the customer-facing app in React and TypeScript.", location: "Bengaluru, India", type: "FULL_TIME", salaryMin: 800000, salaryMax: 1400000, skills: ["React", "TypeScript", "CSS"] },
   { title: "Backend Engineer (Node.js)", description: "Own the API layer and MongoDB data model powering the platform.", location: "Remote", type: "REMOTE", salaryMin: 900000, salaryMax: 1600000, skills: ["Node.js", "MongoDB", "TypeScript"] },
@@ -34,24 +60,50 @@ const featuredJobs = [
   { title: "Cloud Support Engineer", description: "Help teams troubleshoot production systems and build dependable cloud practices.", location: "Remote", type: "PART_TIME", salaryMin: 450000, salaryMax: 850000, skills: ["Linux", "AWS", "Incident Response"] },
 ];
 
-await client.connect();
-await Promise.all([
-  db.collection("users").deleteMany({ email: { $in: ["recruiter@example.com", "candidate@example.com"] } }),
-  db.collection("jobs").deleteMany({ title: { $in: featuredJobs.map((job) => job.title) } }),
-]);
-await db.collection("users").insertMany([
-  { id: recruiterId, name: "Priya Nair", email: "recruiter@example.com", passwordHash, role: "RECRUITER", createdAt: now, updatedAt: now },
-  { id: candidateId, name: "Alex Chen", email: "candidate@example.com", passwordHash, role: "CANDIDATE", createdAt: now, updatedAt: now },
-]);
-await db.collection("recruiterProfiles").insertOne({ id: randomUUID(), userId: recruiterId, company: "Northwind Labs", companyWebsite: "https://northwind.example" });
-await db.collection("candidateProfiles").insertOne({ id: randomUUID(), userId: candidateId, headline: "Frontend engineer, 3 yrs", skills: ["React", "TypeScript", "CSS"], updatedAt: now });
-await db.collection("jobs").insertMany(featuredJobs.map((job) => ({
-  ...job,
-  id: randomUUID(),
-  recruiterId,
-  status: "OPEN",
-  createdAt: now,
-  updatedAt: now,
-})));
-console.log("Seeded recruiter@example.com and candidate@example.com with password password123");
-await client.close();
+async function main() {
+  const client = new MongoClient(uri);
+  const db = client.db(dbName);
+  const now = new Date();
+  const passwordHash = await bcrypt.hash("password123", 10);
+  const recruiterId = randomUUID();
+  const candidateId = randomUUID();
+
+  try {
+    await client.connect();
+    console.log(`Connected to MongoDB at ${uri}, database: ${dbName}`);
+
+    await Promise.all([
+      db.collection("users").deleteMany({ email: { $in: ["recruiter@example.com", "candidate@example.com"] } }),
+      db.collection("jobs").deleteMany({ title: { $in: featuredJobs.map((job) => job.title) } }),
+    ]);
+
+    await db.collection("users").insertMany([
+      { id: recruiterId, name: "Priya Nair", email: "recruiter@example.com", passwordHash, role: "RECRUITER", createdAt: now, updatedAt: now },
+      { id: candidateId, name: "Alex Chen", email: "candidate@example.com", passwordHash, role: "CANDIDATE", createdAt: now, updatedAt: now },
+    ]);
+
+    await db.collection("recruiterProfiles").insertOne({ id: randomUUID(), userId: recruiterId, company: "Northwind Labs", companyWebsite: "https://northwind.example" });
+    await db.collection("candidateProfiles").insertOne({ id: randomUUID(), userId: candidateId, headline: "Frontend engineer, 3 yrs", skills: ["React", "TypeScript", "CSS"], updatedAt: now });
+
+    await db.collection("jobs").insertMany(featuredJobs.map((job) => ({
+      ...job,
+      id: randomUUID(),
+      recruiterId,
+      status: "OPEN",
+      createdAt: now,
+      updatedAt: now,
+    })));
+
+    console.log("Successfully seeded database!");
+    console.log("Recruiter: recruiter@example.com / password123");
+    console.log("Candidate: candidate@example.com / password123");
+    console.log(`Seeded ${featuredJobs.length} featured jobs.`);
+  } finally {
+    await client.close();
+  }
+}
+
+main().catch((err) => {
+  console.error("Seed script failed:", err);
+  process.exit(1);
+});
