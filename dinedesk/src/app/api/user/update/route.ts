@@ -24,22 +24,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid session.' }, { status: 401 });
     }
 
-    const { name, phone, location, photoUrl } = await request.json();
+    const { name, phone, location, photoUrl, photoPublicId } = await request.json();
 
-    if (!name || name.trim().length < 2) {
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
       return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
     }
 
-    if (phone && !/^[0-9]{0,10}$/.test(phone)) {
+    if (phone && (typeof phone !== 'string' || !/^[0-9]{10}$/.test(phone))) {
       return NextResponse.json({ error: 'Phone number must be 10 digits or empty' }, { status: 400 });
     }
 
-    await User.findByIdAndUpdate(userObjectId, {
+    const updates: Record<string, string | null> = {
       name: name.trim(),
       phone: phone?.trim() || null,
-      location: location?.trim() || null,
-      photoUrl: photoUrl || null,
-    });
+      location: typeof location === 'string' ? location.trim() || null : null,
+    };
+
+    if (photoUrl !== undefined || photoPublicId !== undefined) {
+      if (
+        typeof photoUrl !== 'string' ||
+        typeof photoPublicId !== 'string' ||
+        !/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(photoUrl) ||
+        photoPublicId !== `dinedesk/profiles/${userId}`
+      ) {
+        return NextResponse.json({ error: 'Invalid hosted profile photo.' }, { status: 400 });
+      }
+      updates.photoUrl = photoUrl;
+      updates.photoPublicId = photoPublicId;
+    }
+
+    await User.findByIdAndUpdate(userObjectId, updates, { runValidators: true });
 
     return NextResponse.json({ 
       success: true, 

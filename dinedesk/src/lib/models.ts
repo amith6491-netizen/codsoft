@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema(
     name: String,
     phone: String,
     location: String,
-    photoUrl: String,
+  photoUrl: { type: String, default: null },
+    photoPublicId: { type: String, default: null },
     role: { type: String, default: 'CUSTOMER', enum: ['CUSTOMER', 'STAFF', 'ADMIN'] },
   },
   { timestamps: true }

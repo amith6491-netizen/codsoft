@@ -36,6 +36,7 @@ export async function GET() {
         phone: user.phone,
         location: user.location,
         photoUrl: user.photoUrl,
+        photoPublicId: user.photoPublicId,
       },
     });
   } catch (error) {
